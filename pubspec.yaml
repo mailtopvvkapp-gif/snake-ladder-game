@@ -1,0 +1,16 @@
+name: snake_ladder
+description: A Snake and Ladder game.
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  audioplayers: ^6.0.0
+  confetti: ^0.7.0
+
+flutter:
+  uses-material-design: true
+  
