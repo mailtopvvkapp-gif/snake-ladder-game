@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Set up Flutter
@@ -15,25 +15,19 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Generate Android Project Structure
-        run: flutter create . --org com.example.snakeladder --platforms=android
+      - name: Generate Android Files
+        run: |
+          flutter create . --org com.example.snakeladder --project-name snake_ladder --platforms=android
+          flutter pub get
 
-      - name: Set up Java JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Get Dependencies
-        run: flutter pub get
-
-      - name: Build APK
-        run: flutter build apk --release
+      - name: Build Release APK
+        run: flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: game-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          
           
           
