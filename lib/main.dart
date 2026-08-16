@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:confetti/confetti.dart';
 
 void main() => runApp(const SnakeLadderApp());
@@ -10,222 +9,318 @@ class SnakeLadderApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
+      title: 'Snake & Ladder Master',
       debugShowCheckedModeBanner: false,
-      home: SetupScreen(),
+      theme: ThemeData(
+        primarySwatch: Colors.deepPurple,
+        useMaterial3: true,
+      ),
+      home: const CharacterSelectScreen(),
     );
   }
 }
 
-// Model for Player Profile
-class Player {
+// Character definition model
+class CharacterProfile {
+  final String id;
   final String name;
-  final String avatarPath;
+  final String category;
+  final IconData icon;
+  final Color primaryColor;
+  final Color secondaryColor;
+
+  const CharacterProfile({
+    required this.id,
+    required this.name,
+    required this.category,
+    required this.icon,
+    required this.primaryColor,
+    required this.secondaryColor,
+  });
+}
+
+const List<CharacterProfile> kAllCharacters = [
+  // Toon & Animated Icons
+  CharacterProfile(id: 'bheem', name: 'Mighty Bheem', category: 'Cartoon Hero', icon: Icons.sports_martial_arts, primaryColor: Colors.orange, secondaryColor: Colors.amber),
+  CharacterProfile(id: 'chutki', name: 'Chutki', category: 'Cartoon Hero', icon: Icons.face_3, primaryColor: Colors.pinkAccent, secondaryColor: Colors.pink),
+  CharacterProfile(id: 'alien', name: 'Alien Hero', category: 'Cartoon Hero', icon: Icons.smart_toy, primaryColor: Colors.teal, secondaryColor: Colors.greenAccent),
+  CharacterProfile(id: 'ninja', name: 'Shadow Ninja', category: 'Cartoon Hero', icon: Icons.security, primaryColor: Colors.black87, secondaryColor: Colors.red),
+
+  // Cricket Icons
+  CharacterProfile(id: 'batsman', name: 'Master Batsman', category: 'Cricketers', icon: Icons.sports_cricket, primaryColor: Colors.blueAccent, secondaryColor: Colors.lightBlue),
+  CharacterProfile(id: 'captain', name: 'Captain Cool', category: 'Cricketers', icon: Icons.shield, primaryColor: Colors.amber, secondaryColor: Colors.orange),
+  CharacterProfile(id: 'pacer', name: 'Pace King', category: 'Cricketers', icon: Icons.flash_on, primaryColor: Colors.purple, secondaryColor: Colors.deepPurpleAccent),
+  CharacterProfile(id: 'spinner', name: 'Spin Magician', category: 'Cricketers', icon: Icons.album, primaryColor: Colors.redAccent, secondaryColor: Colors.deepOrange),
+];
+
+class Player {
+  final int id;
+  final CharacterProfile character;
   int position;
   String emotion; // "neutral", "happy", "sad"
 
   Player({
-    required this.name,
-    required this.avatarPath,
+    required this.id,
+    required this.character,
     this.position = 1,
     this.emotion = "neutral",
   });
 }
 
-// 1. Setup & Character Selection Screen
-class SetupScreen extends StatefulWidget {
-  const SetupScreen({super.key});
+// -----------------------------------------
+// 1. CHARACTER SELECTION SCREEN
+// -----------------------------------------
+class CharacterSelectScreen extends StatefulWidget {
+  const CharacterSelectScreen({super.key});
 
   @override
-  State<SetupScreen> createState() => _SetupScreenState();
+  State<CharacterSelectScreen> createState() => _CharacterSelectScreenState();
 }
 
-class _SetupScreenState extends State<SetupScreen> {
+class _CharacterSelectScreenState extends State<CharacterSelectScreen> {
   int playerCount = 2;
-  final List<String> availableAvatars = [
-    'assets/images/bheem.png',
-    'assets/images/cricketer_virat.png',
-    'assets/images/cartoon_tom.png',
-    'assets/images/cricketer_dhoni.png',
-  ];
-
-  late List<String> selectedAvatars;
-
-  @override
-  void initState() {
-    super.initState();
-    selectedAvatars = List.from(availableAvatars);
-  }
+  List<CharacterProfile> selected = [kAllCharacters[0], kAllCharacters[4], kAllCharacters[1], kAllCharacters[5]];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Snake & Ladder: Character Select')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [2, 3, 4].map((count) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: playerCount == count ? Colors.amber : Colors.grey[300],
+      backgroundColor: const Color(0xFF1E1E2C),
+      appBar: AppBar(
+        title: const Text('Select Your Heroes', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF2D2B55),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          const SizedBox(height: 15),
+          const Text("Select Number of Players", style: TextStyle(color: Colors.white70, fontSize: 16)),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [2, 3, 4].map((count) {
+              final isSel = playerCount == count;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: ChoiceChip(
+                  label: Text('$count Players', style: TextStyle(color: isSel ? Colors.black : Colors.white)),
+                  selected: isSel,
+                  selectedColor: Colors.amberAccent,
+                  backgroundColor: const Color(0xFF2D2B55),
+                  onSelected: (val) {
+                    if (val) setState(() => playerCount = count);
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+          const Divider(color: Colors.white24, height: 30),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: playerCount,
+              itemBuilder: (context, i) {
+                return Card(
+                  color: const Color(0xFF2D2B55),
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Player ${i + 1}', style: const TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          height: 90,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: kAllCharacters.length,
+                            itemBuilder: (ctx, charIdx) {
+                              final char = kAllCharacters[charIdx];
+                              final isCharChosen = selected[i].id == char.id;
+                              return GestureDetector(
+                                onTap: () => setState(() => selected[i] = char),
+                                child: Container(
+                                  width: 80,
+                                  margin: const EdgeInsets.only(right: 10),
+                                  decoration: BoxDecoration(
+                                    color: isCharChosen ? char.primaryColor.withOpacity(0.3) : Colors.black26,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isCharChosen ? Colors.amberAccent : Colors.transparent,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 18,
+                                        backgroundColor: char.primaryColor,
+                                        child: Icon(char.icon, size: 18, color: Colors.white),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        char.name,
+                                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(char.category, style: const TextStyle(color: Colors.white54, fontSize: 8)),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
-                    onPressed: () => setState(() => playerCount = count),
-                    child: Text('$count Players'),
                   ),
                 );
-              }).toList(),
+              },
             ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: ListView.builder(
-                itemCount: playerCount,
-                itemBuilder: (context, index) {
-                  return Card(
-                    child: ListTile(
-                      title: Text('Player ${index + 1} Character'),
-                      trailing: DropdownButton<String>(
-                        value: selectedAvatars[index],
-                        items: availableAvatars.map((path) {
-                          return DropdownMenuItem(
-                            value: path,
-                            child: Text(path.split('/').last.split('.').first),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) setState(() => selectedAvatars[index] = val);
-                        },
-                      ),
-                    ),
-                  );
-                },
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amberAccent,
+                foregroundColor: Colors.black87,
+                minimumSize: const Size.fromHeight(55),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
               onPressed: () {
-                List<Player> players = List.generate(
+                List<Player> activePlayers = List.generate(
                   playerCount,
-                  (i) => Player(name: 'Player ${i + 1}', avatarPath: selectedAvatars[i]),
+                  (index) => Player(id: index + 1, character: selected[index]),
                 );
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => GameScreen(players: players)),
+                  MaterialPageRoute(builder: (_) => RichGameBoardScreen(players: activePlayers)),
                 );
               },
-              child: const Text('Start Game', style: TextStyle(fontSize: 18)),
-            )
-          ],
-        ),
+              child: const Text('ENTER ARENA', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+            ),
+          )
+        ],
       ),
     );
   }
 }
 
-// 2. Game Board & Audio/Animation Logic
-class GameScreen extends StatefulWidget {
+// -----------------------------------------
+// 2. VISUAL GAME BOARD SCREEN
+// -----------------------------------------
+class RichGameBoardScreen extends StatefulWidget {
   final List<Player> players;
-  const GameScreen({super.key, required this.players});
+  const RichGameBoardScreen({super.key, required this.players});
 
   @override
-  State<GameScreen> createState() => _GameScreenState();
+  State<RichGameBoardScreen> createState() => _RichGameBoardScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
-  final AudioPlayer _audioPlayer = AudioPlayer();
-  late ConfettiController _confettiController;
-  int currentPlayerIndex = 0;
-  int diceValue = 1;
+class _RichGameBoardScreenState extends State<RichGameBoardScreen> {
+  late ConfettiController _confetti;
+  int currentPlayer = 0;
+  int diceRoll = 1;
   bool isRolling = false;
+  String eventStatus = "Roll the dice to begin!";
 
   // Board snakes (Head -> Tail) and ladders (Bottom -> Top)
-  final Map<int, int> ladders = {4: 14, 9: 31, 20: 38, 28: 84, 40: 59, 63: 81, 71: 91};
-  final Map<int, int> snakes = {17: 7, 54: 34, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 99: 78};
+  final Map<int, int> snakes = {98: 28, 95: 56, 92: 51, 83: 19, 73: 1, 69: 33, 64: 36, 59: 17, 52: 11, 48: 9};
+  final Map<int, int> ladders = {4: 14, 8: 30, 21: 42, 28: 76, 36: 44, 51: 67, 71: 91, 80: 100};
 
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 4));
+    _confetti = ConfettiController(duration: const Duration(seconds: 4));
   }
 
   @override
   void dispose() {
-    _audioPlayer.dispose();
-    _confettiController.dispose();
+    _confetti.dispose();
     super.dispose();
-  }
-
-  void _playSound(String fileName) async {
-    await _audioPlayer.stop();
-    await _audioPlayer.play(AssetSource('sounds/$fileName'));
   }
 
   void _rollDice() async {
     if (isRolling) return;
     setState(() => isRolling = true);
 
-    _playSound('dice_roll.mp3');
     int roll = Random().nextInt(6) + 1;
+    setState(() => diceRoll = roll);
 
-    setState(() {
-      diceValue = roll;
-    });
+    Player player = widget.players[currentPlayer];
+    int nextPos = player.position + roll;
 
-    Player current = widget.players[currentPlayerIndex];
+    if (nextPos <= 100) {
+      player.position = nextPos;
+      player.emotion = "neutral";
+      eventStatus = "${player.character.name} moved to $nextPos";
 
-    if (current.position + roll <= 100) {
-      current.position += roll;
-
-      // Check Ladder
-      if (ladders.containsKey(current.position)) {
-        current.position = ladders[current.position]!;
-        current.emotion = "happy";
-        _playSound('hurray.mp3');
+      // Ladder trigger
+      if (ladders.containsKey(player.position)) {
+        player.position = ladders[player.position]!;
+        player.emotion = "happy";
+        eventStatus = "🎉 HURRAY! Ladder climb to ${player.position}!";
       }
-      // Check Snake
-      else if (snakes.containsKey(current.position)) {
-        current.position = snakes[current.position]!;
-        current.emotion = "sad";
-        _playSound('snake_laugh.mp3');
-      } else {
-        current.emotion = "neutral";
+      // Snake bite trigger
+      else if (snakes.containsKey(player.position)) {
+        player.position = snakes[player.position]!;
+        player.emotion = "sad";
+        eventStatus = "🐍 HISSS! Snake bite down to ${player.position}!";
       }
 
-      // Check Victory
-      if (current.position == 100) {
-        _confettiController.play();
-        _playSound('clap_whistle.mp3');
-        _showWinnerDialog(current);
+      if (player.position == 100) {
+        _confetti.play();
+        _showWinnerModal(player);
         setState(() => isRolling = false);
         return;
       }
+    } else {
+      eventStatus = "Need exact roll to reach 100!";
     }
 
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 900));
     setState(() {
-      currentPlayerIndex = (currentPlayerIndex + 1) % widget.players.length;
+      currentPlayer = (currentPlayer + 1) % widget.players.length;
       isRolling = false;
     });
   }
 
-  void _showWinnerDialog(Player winner) {
+  void _showWinnerModal(Player winner) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        title: const Text('🎉 Winner! 🎉'),
-        content: Text('${winner.name} won the match!\n(All other players are clapping)'),
+        backgroundColor: const Color(0xFF2D2B55),
+        title: const Text('🏆 VICTORY! 🏆', textAlign: TextAlign.center, style: TextStyle(color: Colors.amberAccent, fontSize: 24, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 35,
+              backgroundColor: winner.character.primaryColor,
+              child: Icon(winner.character.icon, size: 40, color: Colors.white),
+            ),
+            const SizedBox(height: 12),
+            Text('${winner.character.name} won the championship!', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            const Text('👏 Remaining players are clapping! 👏\n🎺 Whistles & Cheers! 🎺', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 13)),
+          ],
+        ),
         actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: const Text('Play Again'),
+          Center(
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.amberAccent),
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              child: const Text('Play Again', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            ),
           )
         ],
       ),
@@ -234,88 +329,136 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    Player activePlayer = widget.players[currentPlayerIndex];
+    final active = widget.players[currentPlayer];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Snake & Ladder')),
+      backgroundColor: const Color(0xFF1E1E2C),
+      appBar: AppBar(
+        title: const Text('Snake & Ladder Master', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF2D2B55),
+        centerTitle: true,
+      ),
       body: Stack(
         children: [
           Column(
             children: [
-              // Player Status Header
+              // Top Turn & Emotion Bar
               Container(
-                padding: const EdgeInsets.all(12),
-                color: Colors.amber.shade100,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                color: const Color(0xFF2D2B55),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("${activePlayer.name}'s Turn", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text("Emotion: ${activePlayer.emotion.toUpperCase()}", style: const TextStyle(fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-              // Game Board Placeholder / Grid
-              Expanded(
-                child: Container(
-                  margin: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black, width: 2),
-                    color: Colors.orange.shade50,
-                  ),
-                  child: GridView.builder(
-                    reverse: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 10),
-                    itemCount: 100,
-                    itemBuilder: (context, index) {
-                      int tileNum = index + 1;
-                      var playersOnTile = widget.players.where((p) => p.position == tileNum);
-                      return Container(
-                        decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300)),
-                        child: Stack(
-                          children: [
-                            Positioned(top: 2, left: 2, child: Text('$tileNum', style: const TextStyle(fontSize: 8))),
-                            if (playersOnTile.isNotEmpty)
-                              Center(
-                                child: Text(
-                                  playersOnTile.map((p) => p.name[0]).join(','),
-                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue),
-                                ),
-                              ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              // Controls
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20.0),
-                child: Column(
-                  children: [
-                    Text('Dice: $diceValue', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: isRolling ? null : _rollDice,
-                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15)),
-                      child: Text(isRolling ? 'Rolling...' : 'Roll Dice'),
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: active.character.primaryColor,
+                      child: Icon(active.character.icon, color: Colors.white, size: 22),
                     ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("${active.character.name}'s Turn", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                          Text(eventStatus, style: TextStyle(color: active.emotion == "happy" ? Colors.greenAccent : active.emotion == "sad" ? Colors.redAccent : Colors.white70, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    // Emotion Indicator Icon
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: active.emotion == 'happy' ? Colors.green.withOpacity(0.2) : active.emotion == 'sad' ? Colors.red.withOpacity(0.2) : Colors.white10,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            active.emotion == 'happy' ? Icons.sentiment_very_satisfied : active.emotion == 'sad' ? Icons.sentiment_very_dissatisfied : Icons.sentiment_neutral,
+                            color: active.emotion == 'happy' ? Colors.greenAccent : active.emotion == 'sad' ? Colors.redAccent : Colors.white70,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            active.emotion.toUpperCase(),
+                            style: TextStyle(
+                              color: active.emotion == 'happy' ? Colors.greenAccent : active.emotion == 'sad' ? Colors.redAccent : Colors.white70,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
                   ],
                 ),
               ),
-            ],
-          ),
-          Align(
-            alignment: Alignment.topCenter,
-            child: ConfettiWidget(
-              confettiController: _confettiController,
-              blastDirectionality: BlastDirectionality.explosive,
-              shouldLoop: false,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+
+              // Game Board Area
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: AspectRatio(
+                    aspectRatio: 1.0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF3E0),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10, spreadRadius: 2),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: CustomPaint(
+                          painter: BoardArtPainter(snakes: snakes, ladders: ladders),
+                          child: GridView.builder(
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: 100,
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 10),
+                            itemBuilder: (context, index) {
+                              int row = 9 - (index ~/ 10);
+                              int col = (row % 2 == 1) ? 9 - (index % 10) : (index % 10);
+                              int tileNumber = (row * 10) + col + 1;
+
+                              var playersHere = widget.players.where((p) => p.position == tileNumber).toList();
+
+                              return Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.black.withOpacity(0.08), width: 0.5),
+                                ),
+                                child: Stack(
+                                  children: [
+                                    Positioned(
+                                      top: 2,
+                                      left: 2,
+                                      child: Text(
+                                        '$tileNumber',
+                                        style: TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black.withOpacity(0.4),
+                                        ),
+                                      ),
+                                    ),
+                                    if (playersHere.isNotEmpty)
+                                      Center(
+                                        child: Wrap(
+                                          alignment: WrapAlignment.center,
+                                          children: playersHere.map((p) {
+                                            return CircleAvatar(
+                                              radius: 11,
+                                              backgroundColor: p.character.primaryColor,
+                                              child: Icon(p.character.icon, size: 12, color: Colors.white),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  
