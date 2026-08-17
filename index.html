@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Snakes and Ladders</title>
+  <style>
+    :root {
+      --body-bg: #46253c;
+      --phone-bg: #4a243f;
+      --accent-shape: #caa0e2;
+      --roll-btn-bg: #8e8fa3;
+      --roll-btn-text: #38274a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--body-bg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      transition: background 0.3s ease;
+    }
+
+    .phone-container {
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+      height: 100%;
+      max-height: 920px;
+      background: var(--phone-bg);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+      transition: background 0.3s ease;
+    }
+
+    /* Ambient Background Shapes */
+    .phone-container::before {
+      content: '';
+      position: absolute;
+      width: 240px;
+      height: 240px;
+      background: var(--accent-shape);
+      opacity: 0.25;
+      transform: rotate(45deg);
+      top: 40px;
+      right: -120px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .phone-container::after {
+      content: '';
+      position: absolute;
+      width: 240px;
+      height: 240px;
+      background: var(--accent-shape);
+      opacity: 0.25;
+      transform: rotate(45deg);
+      bottom: 40px;
+      left: -120px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Theme Picker Toolbar */
+    .theme-selector {
+      z-index: 5;
+      display: flex;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 6px 10px;
+      border-radius: 20px;
+      margin-bottom: 6px;
+    }
+
+    .theme-btn {
+      border: 2px solid transparent;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.15);
+      transition: all 0.2s ease;
+    }
+
+    .theme-btn.active {
+      border-color: #fff;
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    /* Top Roll Bar */
+    .top-bar {
+      z-index: 2;
+      align-self: flex-start;
+      margin-left: -16px;
+      background: #111;
+      border: 3px solid #000;
+      border-radius: 36px;
+      display: flex;
+      align-items: center;
+      padding: 4px 16px 4px 6px;
+      gap: 12px;
+    }
+
+    .roll-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--roll-btn-bg);
+      border: 3px solid #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--roll-btn-text);
+      font-weight: 900;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .roll-btn span {
+      transform: rotate(-35deg);
+    }
+
+    .score-badge {
+      color: #72a9cc;
+      font-size: 26px;
+      font-weight: 900;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    /* Board Area */
+    .board-wrapper {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 380px;
+      height: auto;
+      aspect-ratio: 1 / 1;
+      border: 4px solid #111;
+      background: #111;
+      border-radius: 6px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Bottom Bar */
+    .bottom-bar {
+      z-index: 2;
+      align-self: flex-end;
+      margin-right: -16px;
+      background: #111;
+      border: 3px solid #000;
+      border-radius: 36px;
+      display: flex;
+      align-items: center;
+      padding: 4px 6px 4px 16px;
+      gap: 12px;
+    }
+
+    .close-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8c8fa6;
+      font-weight: 900;
+      font-size: 14px;
+    }
+
+    .bottom-score {
+      color: #d15656;
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .joystick-base {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #b82b2b;
+      border: 3px solid #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .joystick-knob {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #2a2a2a;
+      border: 2px solid #111;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="phone-container">
+    <!-- Skin Selector -->
+    <div class="theme-selector">
+      <button class="theme-btn active" onclick="setSkin('purple')">Purple</button>
+      <button class="theme-btn" onclick="setSkin('classic')">Classic</button>
+      <button class="theme-btn" onclick="setSkin('emerald')">Emerald</button>
+      <button class="theme-btn" onclick="setSkin('midnight')">Midnight</button>
+    </div>
+
+    <!-- Top UI Bar -->
+    <div class="top-bar">
+      <div class="roll-btn" id="rollBtn">
+        <span>ROLL</span>
+      </div>
+      <div class="score-badge" id="diceResult">0</div>
+    </div>
+
+    <!-- The Game Board Canvas -->
+    <div class="board-wrapper">
+      <canvas id="gameBoard" width="1000" height="1000"></canvas>
+    </div>
+
+    <!-- Bottom UI Bar -->
+    <div class="bottom-bar">
+      <div class="close-icon">&#x2715;</div>
+      <div class="bottom-score" id="bottomScore">0</div>
+      <div class="joystick-base">
+        <div class="joystick-knob"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameBoard');
+    const ctx = canvas.getContext('2d');
+    const size = 1000;
+    const cellSize = size / 10;
+    const root = document.documentElement;
+
+    // Player Positions
+    let player1Pos = 1;
+    let player2Pos = 1;
+
+    // Skin Themes
+    const SKINS = {
+      purple: {
+        bodyBg: '#46253c',
+        phoneBg: '#4a243f',
+        accentShape: '#caa0e2',
+        rollBtnBg: '#8e8fa3',
+        rollBtnText: '#38274a',
+        tileA: '#473166',
+        tileB: '#8e8fa3',
+        textA: '#ffffff',
+        textB: '#241b35',
+        ladderWood: '#8f5c35',
+        ladderBorder: '#613b1f'
+      },
+      classic: {
+        bodyBg: '#489eb5',
+        phoneBg: '#59b8d2',
+        accentShape: '#fde8c2',
+        rollBtnBg: '#59d2fe',
+        rollBtnText: '#ffffff',
+        tileA: '#f2af69',
+        tileB: '#fff6e5',
+        textA: '#b26829',
+        textB: '#b26829',
+        ladderWood: '#9e623a',
+        ladderBorder: '#5b2f15'
+      },
+      emerald: {
+        bodyBg: '#1b3b33',
+        phoneBg: '#1f483e',
+        accentShape: '#a3d9a5',
+        rollBtnBg: '#a3d9a5',
+        rollBtnText: '#133529',
+        tileA: '#275d4a',
+        tileB: '#d8eedd',
+        textA: '#ffffff',
+        textB: '#1a4334',
+        ladderWood: '#7c5332',
+        ladderBorder: '#422a16'
+      },
+      midnight: {
+        bodyBg: '#151728',
+        phoneBg: '#1e213a',
+        accentShape: '#4f5d8e',
+        rollBtnBg: '#6c7ab8',
+        rollBtnText: '#131627',
+        tileA: '#2a2f52',
+        tileB: '#4c5382',
+        textA: '#00f0ff',
+        textB: '#ffffff',
+        ladderWood: '#494268',
+        ladderBorder: '#1c1830'
+      }
+    };
+
+    let activeSkin = SKINS.purple;
+
+    function setSkin(skinKey) {
+      if (!SKINS[skinKey]) return;
+      activeSkin = SKINS[skinKey];
+
+      root.style.setProperty('--body-bg', activeSkin.bodyBg);
+      root.style.setProperty('--phone-bg', activeSkin.phoneBg);
+      root.style.setProperty('--accent-shape', activeSkin.accentShape);
+      root.style.setProperty('--roll-btn-bg', activeSkin.rollBtnBg);
+      root.style.setProperty('--roll-btn-text', activeSkin.rollBtnText);
+
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.toLowerCase() === skinKey);
+      });
+
+      render();
+    }
+
+    function getCellCoords(num) {
+      const index = Math.max(1, Math.min(100, num)) - 1;
+      const rowFromBottom = Math.floor(index / 10);
+      const col = index % 10;
+      const actualCol = (rowFromBottom % 2 === 0) ? col : (9 - col);
+      const actualRow = 9 - rowFromBottom;
+      return {
+        x: actualCol * cellSize + cellSize / 2,
+        y: actualRow * cellSize + cellSize / 2
+      };
+    }
+
+    function drawGrid() {
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+          const isA = (r + c) % 2 === 0;
+          ctx.fillStyle = isA ? activeSkin.tileA : activeSkin.tileB;
+          ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+
+          const rowFromBottom = 9 - r;
+          const num = (rowFromBottom % 2 === 0)
+            ? (rowFromBottom * 10 + c + 1)
+            : (rowFromBottom * 10 + (9 - c) + 1);
+
+          ctx.font = 'bold 24px sans-serif';
+          ctx.fillStyle = isA ? activeSkin.textA : activeSkin.textB;
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'top';
+          ctx.fillText(num, (c + 1) * cellSize - 8, r * cellSize + 8);
+        }
+      }
+    }
+
+    const ladders = [
+      [2, 23], [8, 34], [28, 77], [39, 43], 
+      [45, 66], [71, 91], [68, 89], [82, 100]
+    ];
+
+    function drawLadder(startNum, endNum) {
+      const p1 = getCellCoords(startNum);
+      const p2 = getCellCoords(endNum);
+
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const angle = Math.atan2(dy, dx);
+      const length = Math.hypot(dx, dy);
+
+      ctx.save();
+      ctx.translate(p1.x, p1.y);
+      ctx.rotate(angle);
+
+      const width = 26;
+      ctx.strokeStyle = activeSkin.ladderBorder;
+      ctx.fillStyle = activeSkin.ladderWood;
+      ctx.lineWidth = 4;
+
+      ctx.beginPath();
+      ctx.rect(0, -width / 2, length, 6);
+      ctx.rect(0, width / 2 - 6, length, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      const rungs = Math.max(3, Math.floor(length / 22));
+      for (let i = 1; i < rungs; i++) {
+        const x = (length / rungs) * i;
+        ctx.beginPath();
+        ctx.rect(x - 3, -width / 2, 6, width);
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    const snakes = [
+      { head: 97, tail: 57, color: '#c43f3f', cp: [-90, 80] },
+      { head: 95, tail: 75, color: '#44964b', cp: [40, 20] },
+      { head: 93, tail: 73, color: '#d1b138', cp: [-40, 30] },
+      { head: 88, tail: 70, color: '#25ad8d', cp: [50, 40] },
+      { head: 62, tail: 19, color: '#d1b138', cp: [-50, 60] },
+      { head: 56, tail: 48, color: '#25ad8d', cp: [40, 20] },
+      { head: 49, tail: 33, color: '#c43f3f', cp: [-40, 30] },
+      { head: 36, tail: 17, color: '#2da7ba', cp: [-60, 40] },
+      { head: 14, tail: 5,  color: '#9e64b5', cp: [-50, 20] }
+    ];
+
+    function drawSnake(snake) {
+      const head = getCellCoords(snake.head);
+      const tail = getCellCoords(snake.tail);
+
+      const midX = (head.x + tail.x) / 2 + snake.cp[0];
+      const midY = (head.y + tail.y) / 2 + snake.cp[1];
+
+      // Shadow
+      ctx.beginPath();
+      ctx.moveTo(head.x, head.y);
+      ctx.quadraticCurveTo(midX, midY, tail.x, tail.y);
+      ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+      ctx.lineWidth = 18;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      // Body Border
+      ctx.beginPath();
+      ctx.moveTo(head.x, head.y);
+      ctx.quadraticCurveTo(midX, midY, tail.x, tail.y);
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 16;
+      ctx.stroke();
+
+      // Main Body
+      ctx.beginPath();
+      ctx.moveTo(head.x, head.y);
+      ctx.quadraticCurveTo(midX, midY, tail.x, tail.y);
+      ctx.strokeStyle = snake.color;
+      ctx.lineWidth = 10;
+      ctx.stroke();
+
+      // Head
+      ctx.save();
+      ctx.translate(head.x, head.y);
+      
+      // Eyes
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(-5, -3, 5.5, 0, Math.PI * 2);
+      ctx.arc(5, -3, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Pupils
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.arc(-5, -3, 2.5, 0, Math.PI * 2);
+      ctx.arc(5, -3, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tongue
+      ctx.strokeStyle = '#d63434';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(0, -8);
+      ctx.lineTo(0, -14);
+      ctx.lineTo(-3, -17);
+      ctx.moveTo(0, -14);
+      ctx.lineTo(3, -17);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function drawPawn(num, isPlayer1) {
+      const coord = getCellCoords(num);
+      const offsetX = isPlayer1 ? -18 : 18;
+      const fillColor = isPlayer1 ? '#d4af37' : '#5a6275';
+
+      ctx.save();
+      ctx.translate(coord.x + offsetX, coord.y + 12);
+
+      // Shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.ellipse(0, 8, 14, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Base
+      ctx.fillStyle = fillColor;
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-10, 8);
+      ctx.lineTo(-4, -4);
+      ctx.lineTo(4, -4);
+      ctx.lineTo(10, 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Head
+      ctx.beginPath();
+      ctx.arc(0, -10, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, size, size);
+      drawGrid();
+      ladders.forEach(l => drawLadder(l[0], l[1]));
+      snakes.forEach(s => drawSnake(s));
+      drawPawn(player1Pos, true);
+      drawPawn(player2Pos, false);
+    }
+
+    // Roll Dice Interaction
+    document.getElementById('rollBtn').addEventListener('click', () => {
+      const roll = Math.floor(Math.random() * 6) + 1;
+      document.getElementById('diceResult').textContent = roll;
+      document.getElementById('bottomScore').textContent = roll;
+
+      player1Pos = Math.min(100, player1Pos + roll);
+
+      // Check ladder climb
+      for (const [start, end] of ladders) {
+        if (player1Pos === start) player1Pos = end;
+      }
+
+      // Check snake bite
+      for (const s of snakes) {
+        if (player1Pos === s.head) player1Pos = s.tail;
+      }
+
+      render();
+    });
+
+    // Run render immediately on load
+    window.addEventListener('DOMContentLoaded', () => {
+      setSkin('purple');
+    });
+    window.addEventListener('resize', render);
+  </script>
+</body>
+</html>
