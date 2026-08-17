@@ -44,14 +44,20 @@
       overflow: hidden;
     }
 
-    /* Minimal Compact Header */
+    /* Top Bar & Zoom Controls */
     .top-header {
       width: 100%;
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 2px 4px;
-      z-index: 5;
+      z-index: 10;
+    }
+
+    .header-group {
+      display: flex;
+      gap: 4px;
+      align-items: center;
     }
 
     .theme-bar {
@@ -78,6 +84,20 @@
       background: rgba(255, 255, 255, 0.45);
     }
 
+    .tool-btn {
+      border: none;
+      background: #4a4d68;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .action-btn {
       border: none;
       background: #c23b3b;
@@ -89,7 +109,7 @@
       cursor: pointer;
     }
 
-    /* Player Status Ribbon */
+    /* Player Ribbon */
     .players-ribbon {
       width: 100%;
       display: flex;
@@ -125,13 +145,13 @@
       border: 1px solid #fff;
     }
 
-    /* Edge-to-Edge Maximized Board Area */
+    /* Edge-to-Edge Maximized & Zoomable Board Container */
     .board-container {
       position: relative;
       width: 99vw;
       max-width: 520px;
       aspect-ratio: 1 / 1;
-      max-height: calc(100vh - 105px);
+      max-height: calc(100vh - 110px);
       background: #000;
       border-radius: 6px;
       border: 3px solid #111;
@@ -140,6 +160,22 @@
       justify-content: center;
       align-items: center;
       overflow: hidden;
+      touch-action: none;
+    }
+
+    .canvas-viewport {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: center center;
+      transition: transform 0.1s ease-out;
+      cursor: grab;
+    }
+
+    .canvas-viewport:active {
+      cursor: grabbing;
     }
 
     canvas {
@@ -148,7 +184,7 @@
       display: block;
     }
 
-    /* Floating Reaction Badge (Happy Player / Laughing Snake) */
+    /* Floating Reaction Badge */
     .reaction-badge {
       position: absolute;
       top: 50%;
@@ -164,7 +200,7 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      z-index: 15;
+      z-index: 25;
       pointer-events: none;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
       transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
@@ -198,7 +234,7 @@
       border-radius: 12px;
       padding: 4px 10px;
       border: 2px solid #000;
-      z-index: 5;
+      z-index: 10;
     }
 
     .turn-text {
@@ -278,17 +314,17 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 20;
+      z-index: 30;
     }
 
     .modal-card {
       background: #381f33;
       border: 3px solid #caa0e2;
       border-radius: 16px;
-      padding: 18px;
+      padding: 16px;
       text-align: center;
-      width: 85%;
-      max-width: 290px;
+      width: 88%;
+      max-width: 320px;
       color: white;
     }
 
@@ -300,12 +336,35 @@
     .modal-card p {
       font-size: 11px;
       color: #ddd;
+      margin-bottom: 10px;
+    }
+
+    .skin-picker-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
       margin-bottom: 12px;
+    }
+
+    .skin-card {
+      border: 2px solid transparent;
+      border-radius: 8px;
+      padding: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+
+    .skin-card.active {
+      border-color: #ffd700;
+      background: rgba(255, 215, 0, 0.25);
     }
 
     .option-btn {
       width: 100%;
-      padding: 9px;
+      padding: 8px;
       margin-bottom: 6px;
       background: #caa0e2;
       color: #2b1126;
@@ -320,23 +379,32 @@
 <body>
 
   <div class="game-screen">
-    <!-- Header -->
+    <!-- Header with Skin Selection and Zoom Controls -->
     <div class="top-header">
-      <div class="theme-bar">
-        <button class="theme-btn active" onclick="setSkin('purple')">Purple</button>
-        <button class="theme-btn" onclick="setSkin('classic')">Classic</button>
-        <button class="theme-btn" onclick="setSkin('emerald')">Emerald</button>
-        <button class="theme-btn" onclick="setSkin('midnight')">Midnight</button>
+      <div class="header-group">
+        <div class="theme-bar">
+          <button class="theme-btn active" onclick="setSkin('purple')">Purple</button>
+          <button class="theme-btn" onclick="setSkin('classic')">Classic</button>
+          <button class="theme-btn" onclick="setSkin('emerald')">Emerald</button>
+          <button class="theme-btn" onclick="setSkin('midnight')">Midnight</button>
+        </div>
       </div>
-      <button class="action-btn" onclick="openPlayerSelect()">New Game</button>
+      <div class="header-group">
+        <button class="tool-btn" onclick="zoomBoard(0.2)" title="Zoom In">🔍+</button>
+        <button class="tool-btn" onclick="zoomBoard(-0.2)" title="Zoom Out">🔍−</button>
+        <button class="tool-btn" onclick="resetZoom()" title="Reset Zoom">⟲</button>
+        <button class="action-btn" onclick="openPlayerSelect()">New Game</button>
+      </div>
     </div>
 
     <!-- Players Ribbon -->
     <div class="players-ribbon" id="playersRibbon"></div>
 
-    <!-- Maximized Board Container -->
-    <div class="board-container">
-      <canvas id="gameBoard" width="1000" height="1000"></canvas>
+    <!-- Maximized Board Container with Pan and Zoom Viewport -->
+    <div class="board-container" id="boardContainer">
+      <div class="canvas-viewport" id="canvasViewport">
+        <canvas id="gameBoard" width="1000" height="1000"></canvas>
+      </div>
       <!-- Reaction Overlay -->
       <div class="reaction-badge" id="reactionBadge">
         <div class="reaction-icon" id="reactionIcon">😄</div>
@@ -356,11 +424,18 @@
       </div>
     </div>
 
-    <!-- Selection Modal -->
+    <!-- Setup Modal (Players & Skin Selection) -->
     <div class="modal-overlay" id="setupModal">
       <div class="modal-card">
         <h2>Snakes & Ladders</h2>
-        <p>Choose player count</p>
+        <p>1. Choose Board Skin:</p>
+        <div class="skin-picker-group">
+          <div class="skin-card active" onclick="selectModalSkin('purple', this)">🟣 Purple</div>
+          <div class="skin-card" onclick="selectModalSkin('classic', this)">🟠 Classic</div>
+          <div class="skin-card" onclick="selectModalSkin('emerald', this)">🟢 Emerald</div>
+          <div class="skin-card" onclick="selectModalSkin('midnight', this)">🔵 Midnight</div>
+        </div>
+        <p>2. Choose Players:</p>
         <button class="option-btn" onclick="startGame(1)">1 Player vs Bot 🤖</button>
         <button class="option-btn" onclick="startGame(2)">2 Players</button>
         <button class="option-btn" onclick="startGame(3)">3 Players</button>
@@ -379,7 +454,69 @@
   </div>
 
   <script>
-    // --- Synthesized Sound Effects (Offline Web Audio API) ---
+    // --- Zoom and Pan System ---
+    let currentZoom = 1.0;
+    let panX = 0, panY = 0;
+    let isDragging = false;
+    let startPanX = 0, startPanY = 0;
+    const viewport = document.getElementById('canvasViewport');
+    const boardContainer = document.getElementById('boardContainer');
+
+    function updateTransform() {
+      viewport.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
+    }
+
+    function zoomBoard(delta) {
+      currentZoom = Math.min(2.5, Math.max(1.0, currentZoom + delta));
+      if (currentZoom === 1.0) {
+        panX = 0;
+        panY = 0;
+      }
+      updateTransform();
+    }
+
+    function resetZoom() {
+      currentZoom = 1.0;
+      panX = 0;
+      panY = 0;
+      updateTransform();
+    }
+
+    // Drag-to-Pan Event Listeners
+    boardContainer.addEventListener('mousedown', (e) => {
+      if (currentZoom <= 1.0) return;
+      isDragging = true;
+      startPanX = e.clientX - panX;
+      startPanY = e.clientY - panY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      panX = e.clientX - startPanX;
+      panY = e.clientY - startPanY;
+      updateTransform();
+    });
+
+    window.addEventListener('mouseup', () => { isDragging = false; });
+
+    boardContainer.addEventListener('touchstart', (e) => {
+      if (currentZoom <= 1.0 || e.touches.length !== 1) return;
+      isDragging = true;
+      startPanX = e.touches[0].clientX - panX;
+      startPanY = e.touches[0].clientY - panY;
+    }, { passive: false });
+
+    boardContainer.addEventListener('touchmove', (e) => {
+      if (!isDragging || e.touches.length !== 1) return;
+      panX = e.touches[0].clientX - startPanX;
+      panY = e.touches[0].clientY - startPanY;
+      updateTransform();
+      e.preventDefault();
+    }, { passive: false });
+
+    boardContainer.addEventListener('touchend', () => { isDragging = false; });
+
+    // --- Synthesized Sound Effects (Web Audio API) ---
     let audioCtx = null;
 
     function getAudioContext() {
@@ -436,7 +573,6 @@
       } catch (e) {}
     }
 
-    // Cheerful Happy Ladder Chime
     function playLadderHappySound() {
       try {
         const ctx = getAudioContext();
@@ -447,10 +583,8 @@
           const startTime = ctx.currentTime + index * 0.12;
           osc.type = 'triangle';
           osc.frequency.setValueAtTime(freq, startTime);
-
           gain.gain.setValueAtTime(0.25, startTime);
           gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
-
           osc.connect(gain);
           gain.connect(ctx.destination);
           osc.start(startTime);
@@ -459,11 +593,9 @@
       } catch (e) {}
     }
 
-    // Mischievous Laughing Snake Hiss & Chuckle
     function playSnakeSmileSound() {
       try {
         const ctx = getAudioContext();
-        // Hiss sound
         const bufferSize = ctx.sampleRate * 0.25;
         const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -483,7 +615,6 @@
         noiseGain.connect(ctx.destination);
         noise.start();
 
-        // Sinister chuckle pulses (Ha-Ha-Ha)
         const chuckleFreqs = [240, 210, 180];
         chuckleFreqs.forEach((freq, idx) => {
           const osc = ctx.createOscillator();
@@ -492,10 +623,8 @@
           osc.type = 'sawtooth';
           osc.frequency.setValueAtTime(freq, startTime);
           osc.frequency.exponentialRampToValueAtTime(freq - 40, startTime + 0.12);
-
           gain.gain.setValueAtTime(0.2, startTime);
           gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.12);
-
           osc.connect(gain);
           gain.connect(ctx.destination);
           osc.start(startTime);
@@ -504,7 +633,7 @@
       } catch (e) {}
     }
 
-    // --- Board Engine & Visuals ---
+    // --- Board Engine & Graphics ---
     const canvas = document.getElementById('gameBoard');
     const ctx = canvas.getContext('2d');
     const size = 1000;
@@ -543,13 +672,11 @@
     };
     let activeSkin = SKINS.purple;
 
-    // Ladders: [start, end]
     const ladders = [
       [2, 23], [8, 34], [28, 77], [39, 44],
       [45, 66], [71, 91], [68, 89], [82, 100]
     ];
 
-    // Snakes with expressive heads
     const snakes = [
       { head: 97, tail: 57, color: '#e84118', belly: '#fbc531', angle: -0.2, cp: [[-45, 50], [70, 130], [-60, 220]] },
       { head: 95, tail: 75, color: '#44bd32', belly: '#a3cb38', angle: 0.1, cp: [[35, 25], [-25, 65]] },
@@ -581,6 +708,12 @@
         btn.classList.toggle('active', btn.textContent.toLowerCase() === skinKey);
       });
       render();
+    }
+
+    function selectModalSkin(skinKey, element) {
+      document.querySelectorAll('.skin-card').forEach(c => c.classList.remove('active'));
+      element.classList.add('active');
+      setSkin(skinKey);
     }
 
     function showReaction(icon, text, duration = 1800) {
@@ -615,6 +748,7 @@
       }
 
       currentPlayerIndex = 0;
+      resetZoom();
       updatePlayersUI();
       render();
     }
@@ -653,7 +787,6 @@
       };
     }
 
-    // High-visibility, large text grid
     function drawGrid() {
       for (let r = 0; r < 10; r++) {
         for (let c = 0; c < 10; c++) {
@@ -707,7 +840,7 @@
       });
     }
 
-    // Clear, bold cartoon snakes with expressive eyes and fangs
+    // High-Detail Expressive Cartoon Snakes
     function drawSnakes() {
       snakes.forEach(s => {
         const head = getCellCoords(s.head);
@@ -755,74 +888,89 @@
         ctx.stroke();
         ctx.restore();
 
-        // Distinct Cartoon Snake Head
+        // Detailed Cartoon Snake Head
         ctx.save();
         ctx.translate(head.x, head.y);
         ctx.rotate(s.angle || 0);
 
-        // Forked Tongue
+        // Long Animated Forked Tongue
         ctx.strokeStyle = '#e74c3c';
-        ctx.lineWidth = 3.5;
+        ctx.lineWidth = 4;
         ctx.beginPath();
         ctx.moveTo(0, -10);
-        ctx.lineTo(0, -22);
-        ctx.lineTo(-6, -28);
-        ctx.moveTo(0, -22);
-        ctx.lineTo(6, -28);
+        ctx.lineTo(0, -26);
+        ctx.lineTo(-6, -33);
+        ctx.moveTo(0, -26);
+        ctx.lineTo(6, -33);
         ctx.stroke();
 
-        // Head Base
+        // Snake Head Base with Shading
         ctx.fillStyle = s.color;
         ctx.strokeStyle = '#050505';
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.ellipse(0, 0, 20, 16, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 2, 22, 18, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
+
+        // Snout Highlight Ring
+        ctx.fillStyle = s.belly;
+        ctx.beginPath();
+        ctx.ellipse(0, -6, 12, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cute Nostrils
+        ctx.fillStyle = '#050505';
+        ctx.beginPath();
+        ctx.arc(-4, -6, 1.8, 0, Math.PI * 2);
+        ctx.arc(4, -6, 1.8, 0, Math.PI * 2);
+        ctx.fill();
 
         // Cheek Smile Arc
         ctx.strokeStyle = '#050505';
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.arc(0, 4, 10, 0.2 * Math.PI, 0.8 * Math.PI);
+        ctx.arc(0, 5, 11, 0.15 * Math.PI, 0.85 * Math.PI);
         ctx.stroke();
 
-        // Tiny fangs
+        // Sharp White Cartoon Fangs
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.moveTo(-5, 6);
-        ctx.lineTo(-3, 11);
-        ctx.lineTo(-1, 6);
+        ctx.moveTo(-7, 8);
+        ctx.lineTo(-4, 14);
+        ctx.lineTo(-1, 8);
         ctx.fill();
 
         ctx.beginPath();
-        ctx.moveTo(1, 6);
-        ctx.lineTo(3, 11);
-        ctx.lineTo(5, 6);
+        ctx.moveTo(1, 8);
+        ctx.lineTo(4, 14);
+        ctx.lineTo(7, 8);
         ctx.fill();
 
         // Big Expressive Cartoon Eyes
         ctx.fillStyle = '#ffffff';
         ctx.strokeStyle = '#050505';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 3.5;
         ctx.beginPath();
-        ctx.arc(-7, -4, 7, 0, Math.PI * 2);
-        ctx.arc(7, -4, 7, 0, Math.PI * 2);
+        ctx.arc(-8, -4, 8, 0, Math.PI * 2);
+        ctx.arc(8, -4, 8, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
-        // Pupils looking down/mischievous
+        // Mischievous Shiny Pupils
         ctx.fillStyle = '#050505';
         ctx.beginPath();
-        ctx.arc(-6, -3, 3.5, 0, Math.PI * 2);
-        ctx.arc(6, -3, 3.5, 0, Math.PI * 2);
+        ctx.arc(-7, -3, 4, 0, Math.PI * 2);
+        ctx.arc(7, -3, 4, 0, Math.PI * 2);
         ctx.fill();
 
-        // Eye glint
+        // Dual Specular Catchlights in Eyes
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.arc(-7, -5, 1.5, 0, Math.PI * 2);
-        ctx.arc(5, -5, 1.5, 0, Math.PI * 2);
+        ctx.arc(-9, -5, 2, 0, Math.PI * 2);
+        ctx.arc(5, -5, 2, 0, Math.PI * 2);
+        ctx.arc(-6, -2, 1, 0, Math.PI * 2);
+        ctx.arc(8, -2, 1, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
@@ -894,7 +1042,7 @@
       drawPawns();
     }
 
-    // --- Turn & Slow-Paced Step-by-Step Logic ---
+    // Turn & Movement Logic
     async function handleTurnRoll() {
       if (isMoving || players.length === 0) return;
       const current = players[currentPlayerIndex];
@@ -905,30 +1053,28 @@
       const diceElem = document.getElementById('diceElement');
       diceElem.classList.add('rolling');
 
-      // Slower, dramatic dice roll animation
       let roll = 1;
       for (let i = 0; i < 9; i++) {
         roll = Math.floor(Math.random() * 6) + 1;
         diceElem.textContent = diceChars[roll];
         playDiceRattleSound();
-        await new Promise(r => setTimeout(r, 110)); // Slower dice tick
+        await new Promise(r => setTimeout(r, 110));
       }
       diceElem.classList.remove('rolling');
       await new Promise(r => setTimeout(r, 200));
 
-      // Slower, satisfying tile-by-tile piece walking
       const targetPos = Math.min(100, current.pos + roll);
       while (current.pos < targetPos) {
         current.pos++;
         playStepSound();
         render();
         updatePlayersUI();
-        await new Promise(r => setTimeout(r, 340)); // Deliberate step delay
+        await new Promise(r => setTimeout(r, 340));
       }
 
       await new Promise(r => setTimeout(r, 250));
 
-      // Check Ladder
+      // Ladder Climb
       for (const [start, end] of ladders) {
         if (current.pos === start) {
           showReaction('😄✨', `${current.name} Climbed Ladder!`);
@@ -942,7 +1088,7 @@
         }
       }
 
-      // Check Snake Bite
+      // Snake Bite
       for (const s of snakes) {
         if (current.pos === s.head) {
           showReaction('🐍😈', `Snake Bit ${current.name}!`);
@@ -956,7 +1102,7 @@
         }
       }
 
-      // Check Winner
+      // Check Victory
       if (current.pos === 100) {
         document.getElementById('winnerText').textContent = `🏆 ${current.name} Wins!`;
         document.getElementById('winModal').style.display = 'flex';
@@ -965,15 +1111,14 @@
         return;
       }
 
-      // Next Player
       currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
       updatePlayersUI();
       isMoving = false;
       document.getElementById('rollBtn').disabled = false;
 
-      // Bot Turn
+      // Bot Automated Turn
       if (players[currentPlayerIndex].isBot) {
-        setTimeout(handleTurnRoll, 1100); // Relaxed bot reaction time
+        setTimeout(handleTurnRoll, 1100);
       }
     }
 
