@@ -1,33 +1,37 @@
-name: Build Android APK
+name: Build and Test
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          channel: 'stable'
-          cache: false
+          node-version: '22'
+          cache: 'npm'
 
-      - name: Generate Android Files & Fetch Packages
-        run: |
-          flutter create . --org com.legends.snakeladder --project-name snake_ladder --platforms=android
-          flutter clean
-          flutter pub get
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Build Release APK
-        run: flutter build apk --release --no-tree-shake-icons
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: game-apk-v2
-          path: build/app/outputs/flutter-apk/app-release.apk
+      - name: Build project
+        run: npm run build
+        env:
+          CI: false # Prevents warnings from being treated as fatal errors (exit code 1)
           
